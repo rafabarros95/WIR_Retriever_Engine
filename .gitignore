@@ -1,0 +1,41 @@
+# --- WIR project artifacts ---
+# Built Terrier indices are large — never commit them (roadmap §4)
+index/
+ai_index/
+*.index/
+
+# Downloaded datasets / snapshots
+data/*
+!data/.gitkeep
+
+# TREC run files are regenerated; keep the folder, drop the outputs
+runs/**/*.txt
+runs/**/*.txt.gz
+runs/**/*.gz
+
+# ir_datasets cache
+.ir_datasets/
+
+# --- Logs ---
+*.log
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# --- uv / virtualenv ---
+.venv/
+venv/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
