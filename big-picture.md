@@ -35,7 +35,7 @@
 
 - LambdaMART (run by xgboost / lightgbm) = "learning to rank." Instead of one fixed formula, this is a machine-learning model that learns from the answer key how to best combine several signals into a ranking.
 
-- sentence-transformers / our "e5" model = an AI model that turns any text — in any language — into a list of numbers (an embedding) that captures its meaning. Two texts about the same topic end up with similar numbers, even if they use different words or languages. "Dense re-ranking" = take BM25's top results and reorder them by meaning-similarity to the query.
+- sentence-transformers / our "e5" model = an AI model that turns any text — in any language — into a list of numbers (an embedding) that captures its meaning. Two texts about the same topic end up with similar numbers, even if they use different words or languages. "Dense re-ranking" = take BM25's top results and reorder them by meaning-similarity to the query. We also tried a stronger cousin, a *cross-encoder* (the `mmarco` model) that reads the query and a paper *together* and scores how well they match — slower, but the most powerful re-ranker.
 
 ### How they connect (the pipeline)
 
@@ -52,16 +52,20 @@ We tested two "extra idea" boosts (the hypotheses):
 
 *The research question: the papers aren't all English (~20% are other languages, Spanish most common). A plain English search might miss relevant Spanish papers. Can we catch them and score higher?*
 
-- Cross-lingual attempt #1 — the obvious way (notebook 06): translate the query to Spanish, search again, and merge the two result lists (RRF). → It failed. Why? The answer key is 96% English papers, so there were almost no Spanish "right answers" to find. Adding a Spanish result list just shoved good English results down. We proved (with a sweep) that the best amount of Spanish to add was zero.
+- Cross-lingual attempt #1 — the obvious way (notebook 05): translate the query to Spanish, search again, and merge the two result lists (RRF). → It failed. Why? The answer key is 96% English papers, so there were almost no Spanish "right answers" to find. Adding a Spanish result list just shoved good English results down. We proved (with a sweep) that the best amount of Spanish to add was zero.
 
-- Cross-lingual attempt #2 — the smart way (notebook 07): use the AI meaning-model that already understands many languages at once, and re-rank BM25's top results by meaning. → It worked — this became our best system (nDCG@10 0.317 vs BM25's 0.292), and statistics confirm the improvement is real. 
+- Cross-lingual attempt #2 — the smart way (notebook 06): use the AI meaning-model (a *bi-encoder*) that already understands many languages at once, and re-rank BM25's top results by meaning. → It worked — a real, statistically-confirmed improvement (nDCG@10 0.317 vs BM25's 0.292).
+
+- Cross-lingual attempt #3 — the strongest model (notebook 07): swap the bi-encoder for a multilingual *cross-encoder* that reads each query+paper pair together. → It became our **best system** (nDCG@10 **0.324**), and the win over BM25 is even more robust — but it's only a *tiny, non-significant* step above the much cheaper bi-encoder.
 
 ### Two honest findings: 
 
 - the AI model on its own is worse than BM25 — you have to blend the two;
 
-- the improvement actually came from understanding meaning/synonyms in English, not really from the cross-language magic (again, because there were so few non-English right answers to recover).
+- the improvement actually came from understanding meaning/synonyms in English, not really from the cross-language magic (again, because there were so few non-English right answers to recover);
+
+- bringing in the heavier, fancier model (the cross-encoder) barely helped over the small one — most of the gain was already captured by the cheap bi-encoder.
 
 ### The final takeaway:
 
-Best system = BM25 + an AI meaning-based re-ranker. And the "research story" is honest and complete: we measured the language problem, showed the naive cross-language fix fails and explained why, then showed the principled fix (meaning-based AI) actually helps. Problem → naive fix fails → smart fix works.
+Best system = BM25 + a multilingual cross-encoder re-ranker (nDCG@10 0.324). And the "research story" is honest and complete: we measured the language problem, showed the naive cross-language fix fails and explained why, then showed the principled fix (meaning-based AI) actually helps. Problem → naive fix fails → smart fix works.
