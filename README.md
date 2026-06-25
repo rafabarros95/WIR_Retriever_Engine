@@ -10,10 +10,20 @@ This README is a **full report of the project** — every step, the tools used, 
 approaches taken, and the results — so it doubles as the lab logbook. The whole project
 is **notebook-only** (no `src/` package): each numbered notebook in
 [`notebooks/`](notebooks/) is one self-contained stage and runs top-to-bottom on the
-`wir-2026` Jupyter kernel. The notebooks extend the four official course tutorials at
-[irgroup-classrooms/wir-2026](https://github.com/irgroup-classrooms/wir-2026)
-(`pyterrier-intro`, `pyterrier-irdatasets-indexing`, `pyterrier-retrieval`,
-`pyterrier-ltr`).
+`wir-2026` Jupyter kernel. The notebooks **mirror the four official course tutorials** at
+[irgroup-classrooms/wir-2026](https://github.com/irgroup-classrooms/wir-2026) and extend
+them on the real collection. Each notebook states its goal and which tutorial it follows
+at the top:
+
+| Notebook | Mirrors tutorial | Deliverable | Role |
+|---|---|---|---|
+| `01_intro_smalldata` | `pyterrier-intro` | — (warm-up) | PyTerrier machinery on tiny `ai.json` |
+| `02_inspect_and_index` | `pyterrier-irdatasets-indexing` | **III / Stage 3** | inspect + build the 870k index |
+| `03_systems_and_evaluation` | `pyterrier-retrieval` | **III / Stage 3** | baselines + improvements, one `pt.Experiment` |
+| `04_hypotheses_and_error_analysis` | (uses `pt.Experiment`) | **IV / Stage 4** | hypotheses + paired significance + error analysis |
+| `05_crosslingual_ltr` | `pyterrier-ltr` | research | lexical cross-lingual + LambdaMART |
+| `06_dense_reranking` | (our extension) | research → III/IV | multilingual dense bi-encoder re-rank |
+| `07_cross_encoder_reranking` | (our extension) | research → III/IV | multilingual cross-encoder re-rank (**best system**) |
 
 > 📄 The professor-facing **2-page preliminary report** is at
 > [`paper/preliminary-report.md`](paper/preliminary-report.md). Course slides live in
@@ -74,7 +84,7 @@ Stage 4**:
 | **langdetect** | 1.0.9 | language audit of corpus + relevant docs (NB05) |
 | **transformers + torch** | 5.12.1 / 2.12.1+cpu | MarianMT EN→ES query translation (NB05); neural re-rankers (NB06/07) |
 | sentencepiece, sacremoses | — | MarianMT tokenisation (NB05) |
-| **xgboost / lightgbm / scikit-learn** | 3.3.0 / — / — | LambdaMART learned re-ranking (NB05) |
+| **xgboost** | 3.3.0 | LambdaMART (`XGBRanker`, `rank:ndcg`) learned re-ranking (NB05) |
 | **sentence-transformers** | 5.6.0 | multilingual dense bi-encoder (NB06) + cross-encoder (NB07) |
 | uv | — | dependency + venv management |
 | nbformat / nbclient | — | notebooks authored + executed programmatically |
@@ -97,14 +107,16 @@ hits file-lock errors add `--link-mode=copy` (see §8).
 ## 3. Step-by-step walkthrough (the report)
 
 ### Notebook 01 — [`01_intro_smalldata.ipynb`](notebooks/01_intro_smalldata.ipynb) · Phase A
-**Goal:** learn the PyTerrier machinery on the tiny `data/ai.json` (2,000 BibSonomy AI
-records) before the real collection.
-**Steps:** load + clean (drop >50 %-empty columns) → set `docno`/`text` → index with
-`IterDictIndexer` → read the **lexicon** (term `Nt`/`TF`) → run `Tf` then `TF_IDF`
-retrievers → recompute **IDF by hand** from the lexicon to demystify it.
-**Result/insight:** index of 2,000 docs / 2,915 terms; `idf(robotics)=1.90 >
-idf(intelligence)=0.30`, and `idf(the)=NaN` (Terrier dropped it as a stopword) — IDF
-rewards rare terms; document length is still unhandled (BM25's job).
+**Goal:** learn the PyTerrier machinery on the tiny `data/ai.json` (BibSonomy AI export)
+before the real collection — mirroring the `pyterrier-intro` tutorial.
+**Steps:** load + clean (keep the `Publication` records, drop >50 %-empty columns) → set
+`docno`/`text` → index with `IterDictIndexer` → read the **lexicon** (term `Nt`/`TF`) →
+run `Tf` then `TF_IDF` retrievers → recompute **IDF by hand** *and* the full **TF-IDF
+score by hand** from the inverted index (the tutorial's "implement your own `tf_idf`"
+exercise).
+**Result/insight:** a ~1,000-publication index; IDF rewards rare terms (a rare term's
+idf ≫ a common term's), and stopwords like `the` are dropped (idf = NaN). Document
+length is still unhandled — that is BM25's job in notebook 03.
 
 ### Notebook 02 — [`02_inspect_and_index.ipynb`](notebooks/02_inspect_and_index.ipynb) · Phase B
 **Goal:** inspect LongEval-Sci and build the real index.

@@ -5,11 +5,8 @@ description = "WIR 2026 search engine for the CLEF LongEval-Sci ad-hoc scientifi
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
-authors = [
-    { name = "Rafael Barros", email = "rafael.rodrigues_barros@smail.th-koeln.de" },
-]
 
-# stack 
+# stack
 dependencies = [
     "python-terrier",
     "ir_datasets",
@@ -19,13 +16,20 @@ dependencies = [
     "numpy",
     "notebook",
     "ipykernel",
-    "matplotlib",  
-    "scipy",        
+    "matplotlib",
+    "scipy",
+    # cross-lingual retrieval + learning-to-rank (notebook 06)
+    "langdetect",          # language audit of corpus / relevant docs
+    "transformers",        # MarianMT EN->ES query translation
+    "torch",               # backend for transformers (CPU build)
+    "sentencepiece",       # MarianMT tokenizer
+    "sacremoses",          # MarianMT detokenisation
+    "scikit-learn",        # LTR (sklearn rankers) + utilities
+    "xgboost",             # LambdaMART learned re-ranker
+    "lightgbm",            # alternative LambdaMART implementation
+    "sentence-transformers",  # multilingual dense re-ranker (notebook 07)
+    "scipy-stubs>=1.15.3.0",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-packages = ["src"]
+[tool.uv]
+package = false
