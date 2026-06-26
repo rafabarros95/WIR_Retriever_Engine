@@ -174,6 +174,22 @@ English semantics.
 
 ---
 
+### Notebooks Overview:
+
+| NB | Focus | Pipeline                                                                                   |
+|----|---|--------------------------------------------------------------------------------------------|
+| 01 | Warm-up | TF -> TF-IDF (built by hand to learn IDF mechanics)                                        |
+| 02 | Indexing | Build Lucene index with author/year metadata (foundation for later boosting)               |
+| 03 | Sparse baselines | TF < TF-IDF < BM25 < BM25-tuned -> RM3 query expansion -> power-law author/year boost      |
+| 04 | Error analysis | BM25 -> paired significance tests (author boost vs. year control); per-query λ sensitivity |
+| 05 | Cross-lingual lexical | BM25(EN) + BM25(ES translated) -> RRF fusion -> optional LambdaMART LTR                    |
+| 06 | Dense re-ranking | BM25 top-50 -> e5-small bi-encoder embeddings -> cosine re-rank -> 0.5·BM25 + 0.5·dense    |
+| 07 | Cross-encoder re-ranking | BM25 top-50 -> mMarco cross-encoder joint scoring -> 0.5·BM25 + 0.5·CE -> nDCG@10 = 0.324  |
+
+Overall flow: sparse lexical baselines (01–03) -> hypothesis testing (04) -> cross-lingual fusion (05) -> semantic bi-encoder (06) -> semantic cross-encoder (07, best result).
+
+---
+
 ## 4. Results
 
 Baselines & re-rankers (nDCG@10, 100 topics, single `pt.Experiment`):
