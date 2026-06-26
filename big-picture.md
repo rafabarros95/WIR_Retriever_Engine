@@ -92,11 +92,11 @@ Overall flow: sparse lexical baselines (01–03) -> hypothesis testing (04) -> c
 
 Each one `hands something to the next`: notebook 2 hands the index to everyone; notebook 3 hands the tuned BM25 settings and the BM25 candidate list to the rest; notebooks 5–7 all re-use that same candidate list so the comparison stays fair.
 
-- Notebook 1 — Warm-up on a tiny pile of papers. Before touching 870k papers, we practice on a small file (`ai.json`, a few thousand AI papers). We build a mini-index, look inside it, and even recompute the matching score *by hand* to prove there's no magic — just counting rare words. **Nothing here is graded; it's training wheels.** → teaches us the machinery used everywhere else.
+- Notebook 1 — Warm-up on a tiny pile of papers. Before touching 870k papers, we practice on a small file (`ai.json`, a few thousand AI papers). We build a mini-index, look inside it, and even recompute the matching score by hand — just counting rare words. It teaches us the machinery used everywhere else.
 
 - Notebook 2 — Build the real library index. We load the real 870k-paper collection and build the big index (the word→papers lookup table). We also store each paper's `authors` and `year` on the side, because notebook 3/4 will need them. This is "build the engine" part 1. -> hands the index to notebooks 3–7.
 
-- Notebook 3 — Build the search systems and grade them (Assignment III). Here we actually search. We line up TF, TF-IDF, BM25, then improve BM25 two standard ways (tune its dials; expand the query with "RM3"), plus our own author-boost idea — and grade them all with nDCG@10 in one comparison. This is the system demo deliverable. → hands the best BM25 settings + the candidate list forward, and the author-boost idea to notebook 4.
+- Notebook 3 — Build the search systems and grade them (Assignment III). Here we actually search. We line up TF, TF-IDF, BM25, then improve BM25 two standard ways (tune its dials; expand the query with "RM3"), plus our own author-boost idea — and grade them all with nDCG@10 in one comparison. This is the system demo deliverable. -> hands the best BM25 settings + the candidate list forward, and the author-boost idea to notebook 4.
 
 - Notebook 4 — Test a hypothesis properly (Assignment IV). Notebook 3 showed averages; an average can lie. Here we ask "is the author-boost improvement real or luck?" using statistics (t-test, Wilcoxon), query by query. We also test a deliberately-bad idea (boost by year) as a sanity check. Result: author-boost = no real effect; year-boost = clearly hurts (as expected). -> confirms our grading actually detects good vs. bad ideas, which we lean on for notebooks 5–7.
 
