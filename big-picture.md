@@ -69,3 +69,41 @@ We tested two "extra idea" boosts (the hypotheses):
 ### The final takeaway:
 
 Best system = BM25 + a multilingual cross-encoder re-ranker (nDCG@10 0.324). And the "research story" is honest and complete: we measured the language problem, showed the naive cross-language fix fails and explained why, then showed the principled fix (meaning-based AI) actually helps. Problem → naive fix fails → smart fix works.
+
+---
+
+### Notebooks Overview:
+
+| NB | Focus | Pipeline                                                                                   |
+|----|---|--------------------------------------------------------------------------------------------|
+| 01 | Warm-up | TF -> TF-IDF (built by hand to learn IDF mechanics)                                        |
+| 02 | Indexing | Build Lucene index with author/year metadata (foundation for later boosting)               |
+| 03 | Sparse baselines | TF < TF-IDF < BM25 < BM25-tuned -> RM3 query expansion -> power-law author/year boost      |
+| 04 | Error analysis | BM25 -> paired significance tests (author boost vs. year control); per-query λ sensitivity |
+| 05 | Cross-lingual lexical | BM25(EN) + BM25(ES translated) -> RRF fusion -> optional LambdaMART LTR                    |
+| 06 | Dense re-ranking | BM25 top-50 -> e5-small bi-encoder embeddings -> cosine re-rank -> 0.5·BM25 + 0.5·dense    |
+| 07 | Cross-encoder re-ranking | BM25 top-50 -> mMarco cross-encoder joint scoring -> 0.5·BM25 + 0.5·CE -> nDCG@10 = 0.324  |
+
+Overall flow: sparse lexical baselines (01–03) -> hypothesis testing (04) -> cross-lingual fusion (05) -> semantic bi-encoder (06) -> semantic cross-encoder (07, best result).
+
+---
+
+### The 7 notebooks in other words (the story):
+
+Each one `hands something to the next`: notebook 2 hands the index to everyone; notebook 3 hands the tuned BM25 settings and the BM25 candidate list to the rest; notebooks 5–7 all re-use that same candidate list so the comparison stays fair.
+
+- Notebook 1 — Warm-up on a tiny pile of papers. Before touching 870k papers, we practice on a small file (`ai.json`, a few thousand AI papers). We build a mini-index, look inside it, and even recompute the matching score *by hand* to prove there's no magic — just counting rare words. **Nothing here is graded; it's training wheels.** → teaches us the machinery used everywhere else.
+
+- Notebook 2 — Build the real library index. We load the real 870k-paper collection and build the big index (the word→papers lookup table). We also store each paper's `authors` and `year` on the side, because notebook 3/4 will need them. This is "build the engine" part 1. -> hands the index to notebooks 3–7.
+
+- Notebook 3 — Build the search systems and grade them (Assignment III). Here we actually search. We line up TF, TF-IDF, BM25, then improve BM25 two standard ways (tune its dials; expand the query with "RM3"), plus our own author-boost idea — and grade them all with nDCG@10 in one comparison. This is the system demo deliverable. → hands the best BM25 settings + the candidate list forward, and the author-boost idea to notebook 4.
+
+- Notebook 4 — Test a hypothesis properly (Assignment IV). Notebook 3 showed averages; an average can lie. Here we ask "is the author-boost improvement real or luck?" using statistics (t-test, Wilcoxon), query by query. We also test a deliberately-bad idea (boost by year) as a sanity check. Result: author-boost = no real effect; year-boost = clearly hurts (as expected). -> confirms our grading actually detects good vs. bad ideas, which we lean on for notebooks 5–7.
+
+- Notebook 5 — Cross-language attempt 1: translation (the obvious fix). The research question starts here: the papers aren't all English. So we translate each query into Spanish, run a second Spanish search, and merge the two lists. We also let a machine-learning ranker (LambdaMART) try to use the Spanish score. `It fails` — the answer key is 96% English, so Spanish results just push good English ones down. -> an honest negative result that motivates the smarter fix in notebooks 6–7.
+
+- Notebook 6 — Cross-language attempt 2: meaning, not words (bi-encoder). Instead of translating, we use an AI model that turns any language into "meaning numbers," and re-order BM25's top results by meaning. It works — the first real, statistically-confirmed win (0.317 vs BM25's 0.292). -> carries the same re-ranking trick to notebook 7, now with a stronger model.
+
+- Notebook 7 — Cross-language attempt 3: the strongest model (cross-encoder). Same idea as notebook 6, but with a heavier AI model that reads the query and each paper together. It becomes our best system (0.324) — but only a tiny step above the cheap model from notebook 6. -> closes the story: the gain is real, but it comes from understanding meaning in general, not specifically from crossing languages.
+
+The thread tying them together: 1 teaches -> 2 builds the index -> 3 builds & grades the systems -> 4 proves which improvements are real -> 5 tries the naive cross-language fix and fails -> 6 tries the smart fix and wins -> 7 pushes the smart fix to its strongest form. Every notebook after 3 re-ranks the same BM25 candidates, so all the numbers are directly comparable.
